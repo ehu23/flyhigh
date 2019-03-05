@@ -40,4 +40,12 @@ module top(
     assign VGA_R[2] = sq_b;         // square b is red
     assign VGA_G[2] = sq_a | sq_d;  // squares a and d are green
     assign VGA_B[1] = sq_c;         // square c is blue
+    
+    // Must fill in rest of bits in array for VGA. Default set to zero.
+    assign VGA_R[0] = 1'b0;
+    assign VGA_R[1] = 1'b0;
+    assign VGA_G[0] = 1'b0;
+    assign VGA_G[1] = 1'b0;
+    assign VGA_B[0] = 1'b0;
+    
 endmodule
