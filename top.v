@@ -1,6 +1,7 @@
 module top(
     input wire CLK,             // board clock: 100 MHz on Arty/Basys3/Nexys
     input wire RST_BTN,         // reset button
+    input wire [3:0] sw,        // 4 movement controls
     output wire VGA_HS_O,       // horizontal sync output
     output wire VGA_VS_O,       // vertical sync output
     output wire [2:0] VGA_R,    // 3-bit VGA red output
@@ -32,55 +33,28 @@ module top(
         .o_animate(animate)
     );
 
-    // 3 animating squares
-    wire sq_a, sq_b, sq_c;
-    wire [11:0] sq_a_x1, sq_a_x2, sq_a_y1, sq_a_y2;  // 12-bit values: 0-4095
-    wire [11:0] sq_b_x1, sq_b_x2, sq_b_y1, sq_b_y2;
-    wire [11:0] sq_c_x1, sq_c_x2, sq_c_y1, sq_c_y2;
+    // Controllable player ship 
+    wire player_ship;
+    wire [11:0] player_x1, player_x2, player_y1, player_y2;  // 12-bit values: 0-4095
 
-    square #(.IX(160), .IY(120), .H_SIZE(60)) sq_a_anim (
+    ship #(.H_SIZE(40)) player (
         .i_clk(CLK),
         .i_ani_stb(pix_stb),
         .i_rst(rst),
         .i_animate(animate),
-        .o_x1(sq_a_x1),
-        .o_x2(sq_a_x2),
-        .o_y1(sq_a_y1),
-        .o_y2(sq_a_y2)
+        .sw(sw),
+        .o_x1(player_x1),
+        .o_x2(player_x2),
+        .o_y1(player_y1),
+        .o_y2(player_y2)
     );
 
-    square #(.IX(320), .IY(240), .IY_DIR(0)) sq_b_anim (
-        .i_clk(CLK),
-        .i_ani_stb(pix_stb),
-        .i_rst(rst),
-        .i_animate(animate),
-        .o_x1(sq_b_x1),
-        .o_x2(sq_b_x2),
-        .o_y1(sq_b_y1),
-        .o_y2(sq_b_y2)
-    );
+    assign player_ship = ((x > player_x1) & (y > player_y1) &
+        (x < player_x2) & (y < player_y2)) ? 1'b1 : 1'b0;
 
-    square #(.IX(480), .IY(360), .H_SIZE(100)) sq_c_anim (
-        .i_clk(CLK),
-        .i_ani_stb(pix_stb),
-        .i_rst(rst),
-        .i_animate(animate),
-        .o_x1(sq_c_x1),
-        .o_x2(sq_c_x2),
-        .o_y1(sq_c_y1),
-        .o_y2(sq_c_y2)
-    );
-
-    assign sq_a = ((x > sq_a_x1) & (y > sq_a_y1) &
-        (x < sq_a_x2) & (y < sq_a_y2)) ? 1'b1 : 1'b0;
-    assign sq_b = ((x > sq_b_x1) & (y > sq_b_y1) &
-        (x < sq_b_x2) & (y < sq_b_y2)) ? 1'b1 : 1'b0;
-    assign sq_c = ((x > sq_c_x1) & (y > sq_c_y1) &
-        (x < sq_c_x2) & (y < sq_c_y2)) ? 1'b1 : 1'b0;
-
-    assign VGA_R[2] = sq_a;  // square a is red
-    assign VGA_G[2] = sq_b;  // square b is green
-    assign VGA_B[1] = sq_c;  // square c is blue
+    assign VGA_R[2] = player_ship;  // player_ship is red
+    assign VGA_G[2] = 1'b0;  
+    assign VGA_B[1] = 1'b0; 
 
     // Must fill in rest of bits in array for VGA. Default set to zero.
     assign VGA_R[0] = 1'b0;
