@@ -9,16 +9,16 @@ module top(
     );
 
     // wire rst = ~RST_BTN;    // reset is active low on Arty & Nexys Video
-    wire rst = RST_BTN;  // reset is active high on Basys3 (BTNC)
+    wire rst = RST_BTN;  // reset is active high on Basys3 (BTNC) and Nexys 3
 
-    // generate a 25 MHz pixel strobe
+    // generate a 25 MHz pixel strobe. So a clock that is four times slower.
     reg [15:0] cnt = 0;
     reg pix_stb = 0;
     always @(posedge CLK)
-        {pix_stb, cnt} <= cnt + 16'h4000;  // divide by 4: (2^16)/4 = 0x4000
+        {pix_stb, cnt} <= cnt + 16'h4000;  // divide by 4: (2^16)/4 = 0x4000. pix_stb AND cnt are assigned.
 
-    wire [9:0] x;  // current pixel x position: 10-bit value: 0-1023
-    wire [8:0] y;  // current pixel y position:  9-bit value: 0-511
+    wire [9:0] x;  // current (visible) pixel x position: 10-bit value: 0-1023. We go up to 640.
+    wire [8:0] y;  // current (visible) pixel y position:  9-bit value: 0-511. We go up to 480.
     wire animate;  // high when we're ready to animate at end of drawing
     
     vga640x480 display (
@@ -72,11 +72,11 @@ module top(
     );
 
     assign sq_a = ((x > sq_a_x1) & (y > sq_a_y1) &
-        (x < sq_a_x2) & (y < sq_a_y2)) ? 1 : 0;
+        (x < sq_a_x2) & (y < sq_a_y2)) ? 1'b1 : 1'b0;
     assign sq_b = ((x > sq_b_x1) & (y > sq_b_y1) &
-        (x < sq_b_x2) & (y < sq_b_y2)) ? 1 : 0;
+        (x < sq_b_x2) & (y < sq_b_y2)) ? 1'b1 : 1'b0;
     assign sq_c = ((x > sq_c_x1) & (y > sq_c_y1) &
-        (x < sq_c_x2) & (y < sq_c_y2)) ? 1 : 0;
+        (x < sq_c_x2) & (y < sq_c_y2)) ? 1'b1 : 1'b0;
 
     assign VGA_R[2] = sq_a;  // square a is red
     assign VGA_G[2] = sq_b;  // square b is green
