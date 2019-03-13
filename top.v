@@ -55,6 +55,12 @@ module top(
     wire firing;
     wire [11:0] bullet_x1, bullet_x2, bullet_y1, bullet_y2;  // 12-bit values: 0-4095
 
+    // Light streaks
+    wire light; 
+    wire [11:0] light1_x1, light1_x2, light1_y1, light1_y2;  // 12-bit values: 0-4095
+    wire [11:0] light2_x1, light2_x2, light2_y1, light2_y2;  // 12-bit values: 0-4095
+
+
     ship #(.H_SIZE(20)) player (
         .i_clk(CLK),
         .i_ani_stb(pix_stb),
@@ -73,17 +79,36 @@ module top(
         .o_firing(firing)
     );
 
+    lightspeed #(.H_SIZE(10)) light1 (
+        .i_clk(CLK),
+        .i_ani_stb(pix_stb),
+        .i_rst(rst),
+        .i_paused(pause),
+        .i_animate(animate),
+        .o_1x1(light1_x1),
+        .o_1x2(light1_x2),
+        .o_1y1(light1_y1),
+        .o_1y2(light1_y2),
+        .o_2x1(light2_x1),
+        .o_2x2(light2_x2),
+        .o_2y1(light2_y1),
+        .o_2y2(light2_y2),
+    );
+
     assign player_ship = ((x > player_x1) & (y > player_y1) &
         (x < player_x2) & (y < player_y2)) ? 1'b1 : 1'b0;
 
     // Color in the bullet as long as its firing/intheair
     assign player_bullet = ((x > bullet_x1) & (y > bullet_y1) &
         (x < bullet_x2) & (y < bullet_y2) & (firing)) ? 1'b1 : 1'b0;
+
+    assign light = (((x > light1_x1) & (y > light1_y1) & (x < light1_x2) & (y < light1_y2)) || 
+        ((x > light2_x1) & (y > light2_y1) & (x < light2_x2) & (y < light2_y2))) ? 1'b1 : 1'b0;
  
     // Designate colors:
     assign VGA_R[2] = player_ship;  // player_ship is red
     assign VGA_G[2] = player_bullet;// player_bullet is green  
-    assign VGA_B[1] = 1'b0; 
+    assign VGA_B[1] = light; // light is blue 
 
     // Must fill in rest of bits in array for VGA. Default set to zero.
     assign VGA_R[0] = 1'b0;
