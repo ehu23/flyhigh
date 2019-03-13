@@ -1,6 +1,7 @@
 module top(
     input wire CLK,             // board clock: 100 MHz on Arty/Basys3/Nexys
     input wire RST_BTN,         // reset button
+    input wire PAUSE_BTN,       // pause button
     input wire [7:0] sw,        // 4 movement controls
     output wire VGA_HS_O,       // horizontal sync output
     output wire VGA_VS_O,       // vertical sync output
@@ -9,13 +10,25 @@ module top(
     output wire [1:0] VGA_B     // 2-bit VGA blue output
     );
 
-    wire rst = RST_BTN;  // reset is active high on Basys3 (BTNC) and Nexys 3
+    wire rst = RST_BTN;  // reset is active high on Nexys 3
+    wire pause;
 
     // generate a 25 MHz pixel strobe. So a clock that is four times slower.
     reg [15:0] cnt = 0;
     reg pix_stb = 0;
+
+    reg paused = 0;
+
     always @(posedge CLK)
+    begin
         {pix_stb, cnt} <= cnt + 16'h4000;  // divide by 4: (2^16)/4 = 0x4000. pix_stb AND cnt are assigned.
+        if (PAUSE_BTN)
+            paused <= ~paused;
+        if (rst)
+            paused <= 0;
+    end
+
+    assign pause = (paused == 0);
 
     wire [9:0] x;  // current (visible) pixel x position: 10-bit value: 0-1023. We go up to 640.
     wire [8:0] y;  // current (visible) pixel y position:  9-bit value: 0-511. We go up to 480.
@@ -25,6 +38,7 @@ module top(
         .i_clk(CLK),
         .i_pix_stb(pix_stb),
         .i_rst(rst),
+        .i_paused(pause),
         .o_hs(VGA_HS_O), 
         .o_vs(VGA_VS_O), 
         .o_x(x), 
@@ -45,6 +59,7 @@ module top(
         .i_clk(CLK),
         .i_ani_stb(pix_stb),
         .i_rst(rst),
+        .i_paused(pause),
         .i_animate(animate),
         .i_sw(sw),
         .o_x1(player_x1),

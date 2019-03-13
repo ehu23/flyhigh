@@ -10,6 +10,7 @@ module ship #(
     input wire i_clk,         // base clock
     input wire i_ani_stb,     // animation clock: pixel clock is 1 pix/frame
     input wire i_rst,         // reset: returns animation to starting position
+    input wire i_paused,
     input wire i_animate,     // animate when input is high
     input wire [7:0] i_sw,      // movement switches
     output wire [11:0] o_x1,  // player left edge: 12-bit value: 0-4095. We use 12 bits so this module can be used on 4k as well.
@@ -54,7 +55,7 @@ module ship #(
             by <= IY;
             in_air = 0;
         end
-        if (i_animate && i_ani_stb)
+        if (i_animate && i_ani_stb && ~i_paused)
         begin
             // Player Movement
             if (i_sw[0]) // Right

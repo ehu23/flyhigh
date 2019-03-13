@@ -2,6 +2,7 @@ module vga640x480(
     input wire i_clk,           // base clock
     input wire i_pix_stb,       // pixel clock strobe
     input wire i_rst,           // reset: restarts frame
+    input wire i_paused,        // paused: paused frame
     output wire o_hs,           // horizontal sync
     output wire o_vs,           // vertical sync
     output wire o_blanking,     // high during blanking interval
@@ -13,7 +14,6 @@ module vga640x480(
     );
     // o_x and o_y are used for positioning and drawing graphics
 
-    // VGA timings https://timetoexplore.net/blog/video-timings-vga-720p-1080p
     localparam HS_STA = 16;              // horizontal sync start
     localparam HS_END = 16 + 96;         // horizontal sync end
     localparam HA_STA = 16 + 96 + 48;    // horizontal active pixel start
@@ -58,7 +58,8 @@ module vga640x480(
             h_count <= 1'b0;
             v_count <= 1'b0;
         end
-        if (i_pix_stb)  // once per pixel
+
+        if (i_pix_stb && ~i_paused)  // once per pixel
         begin
             if (h_count == LINE)  // end of line
             begin
