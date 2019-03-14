@@ -5,7 +5,7 @@ module debouncer(
     );
 	 
 reg btn_state_value = 0;
-reg [15:0] counter;
+reg [23:0] counter;
 
 always @ (posedge i_clk)
 begin
@@ -18,7 +18,7 @@ begin
 	else
 	begin
 		counter <= counter + 1'b1;
-		if(counter == 16'hffff) // if we count up to the max, we know its a good sample
+		if(counter == 24'hffffff) // if we count up to the max, we know its a good sample
 		begin
 			btn_state_value <= 1;
 			counter <= 0;

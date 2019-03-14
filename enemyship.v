@@ -59,7 +59,7 @@ module enemyship #(
             y <= IY;
             bx <= IX;
             by <= IY;
-            x_dir = IX_DIR;
+            x_dir <= IX_DIR;
             in_air = 0;
         end
         if (i_animate && i_ani_stb && ~i_paused)
@@ -80,8 +80,10 @@ module enemyship #(
                 by <= by + 2'b11; // Move bullet down
 
             // Player Boundary control:
-            if (x <= H_BOUND || x >= D_WIDTH-H_BOUND)  // if at horizontal boundary, change direction
-                x_dir <= ~x_dir;
+            if (x <= H_BOUND)  // if at horizontal boundary, change direction
+                x_dir <= 1'b1;
+            if (x >= D_WIDTH-H_BOUND)  // if at horizontal boundary, change direction
+                x_dir <= 1'b0;
             if (y <= H_SIZE + 1'b1)  // edge of square at top of screen
                 y <= H_SIZE + 2'b10;  
             if (y >= (D_HEIGHT - H_SIZE - 1'b1))  // edge of square at bottom
