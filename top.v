@@ -10,55 +10,70 @@ module top(
     output wire [1:0] VGA_B     // 2-bit VGA blue output
     );
 
+    // State of buttons
     wire rst;
     wire pause;
 	 
-    // generate a 25 MHz pixel strobe. So a clock that is four times slower.
-    reg [15:0] cnt = 0;
-    reg pix_stb = 0;
-	 
-	 
-    always @(posedge CLK)
-    begin
-        {pix_stb, cnt} <= cnt + 16'h4000;  // divide by 4: (2^16)/4 = 0x4000. pix_stb AND cnt are assigned.
-    end
-	 
-	 
-    wire [9:0] x;  // current (visible) pixel x position: 10-bit value: 0-1023. We go up to 640.
-    wire [8:0] y;  // current (visible) pixel y position:  9-bit value: 0-511. We go up to 480.
-    wire animate;  // high when we're ready to animate at end of drawing
-    wire paused; // high when paused
-	 
-	 debouncer reset_button(
+    debouncer reset_button(
 			.i_btn(RST_BTN),
 			.i_clk(CLK),
 			.o_btn_state(rst)
 			);
 	
-	 debouncer pause_button(
+    debouncer pause_button(
 			.i_btn(PAUSE_BTN),
 			.i_clk(CLK),
 			.o_btn_state(pause)
 			);
+
+
+    // generate a 25 MHz pixel strobe. So a clock that is four times slower.
+    reg [15:0] cnt = 0;
+    reg pix_stb = 0;
+
+    always @(posedge CLK)
+    begin
+        {pix_stb, cnt} <= cnt + 16'h4000;  // divide by 4: (2^16)/4 = 0x4000. pix_stb AND cnt are assigned.
+    end
+	 
+
+    // Misc Variables
+    wire [9:0] x;  // current (visible) pixel x position: 10-bit value: 0-1023. We go up to 640.
+    wire [8:0] y;  // current (visible) pixel y position:  9-bit value: 0-511. We go up to 480.
+    wire animate;  // high when we're ready to animate at end of drawing
+    wire paused;   // high when paused
+	 
 			
-			
-			
-	 // Controllable player ship 
+    // Controllable player ship 
     wire player_ship;
     wire [11:0] player_x1, player_x2, player_y1, player_y2;  // 12-bit values: 0-4095
 
     // Player's bullet 
     wire player_bullet; 
-    wire firing;
+    wire player_firing;
     wire [11:0] bullet_x1, bullet_x2, bullet_y1, bullet_y2; 
+
+    // Automated enemy ship 
+    wire enemy_ship;
+    wire [11:0] enemy1_x1, enemy1_x2, enemy1_y1, enemy1_y2;  // 12-bit values: 0-4095
+
+    // Enemy's bullet 
+    wire enemy_bullet; 
+    wire enemy1_firing;
+    wire [11:0] e1bullet_x1, e1bullet_x2, e1bullet_y1, e1bullet_y2; 
+   
+    // Enemy lifeforce
+    wire e1alive;
+    reg e1hit = 0;
+    assign e1alive = ~e1hit;
 
     // Light streaks
     wire light;
     wire [11:0] light1_x1, light1_x2, light1_y1, light1_y2;  
     wire [11:0] light2_x1, light2_x2, light2_y1, light2_y2;  
-	 wire [11:0] light3_x1, light3_x2, light3_y1, light3_y2;  
+    wire [11:0] light3_x1, light3_x2, light3_y1, light3_y2;  
     wire [11:0] light4_x1, light4_x2, light4_y1, light4_y2; 
-	 wire [11:0] light5_x1, light5_x2, light5_y1, light5_y2;  
+    wire [11:0] light5_x1, light5_x2, light5_y1, light5_y2;  
     wire [11:0] light6_x1, light6_x2, light6_y1, light6_y2;
 	 
 	 
@@ -66,17 +81,17 @@ module top(
         .i_clk(CLK),
         .i_pix_stb(pix_stb),
         .i_rst(rst),
-		  .i_pause(pause),
+        .i_pause(pause),
         .o_hs(VGA_HS_O), 
         .o_vs(VGA_VS_O), 
         .o_x(x), 
         .o_y(y),
         .o_animate(animate),
-		  .o_paused(paused)
+        .o_paused(paused)
     );
 
 
-    ship #(.H_SIZE(20)) player (
+    ship #(.H_SIZE(20), .IX(200)) player (
         .i_clk(CLK),
         .i_ani_stb(pix_stb),
         .i_rst(rst),
@@ -91,7 +106,25 @@ module top(
         .o_bx2(bullet_x2),
         .o_by1(bullet_y1),
         .o_by2(bullet_y2),
-        .o_firing(firing)
+        .o_firing(player_firing)
+    );
+
+    enemyship #(.H_SIZE(20), .IY(100)) enemy1 (
+        .i_clk(CLK),
+        .i_ani_stb(pix_stb),
+        .i_rst(rst),
+        .i_paused(paused),
+        .i_animate(animate),
+        .i_alive(e1alive),
+        .o_x1(enemy1_x1),
+        .o_x2(enemy1_x2),
+        .o_y1(enemy1_y1),
+        .o_y2(enemy1_y2),
+        .o_bx1(e1bullet_x1),
+        .o_bx2(e1bullet_x2),
+        .o_by1(e1bullet_y1),
+        .o_by2(e1bullet_y2),
+        .o_firing(enemy1_firing)
     );
 
     lightspeed #(.H_SIZE(3), .IX(30), .L_FACTOR(15), .SPEED(9)) light1 (
@@ -146,27 +179,36 @@ module top(
     assign player_ship = ((x > player_x1) & (y > player_y1) & (x < player_x2) & (y < player_y2)) ? 1'b1 : 1'b0;
 
     // Color in the bullet as long as its firing/intheair
-    assign player_bullet = ((x > bullet_x1) & (y > bullet_y1) & (x < bullet_x2) & (y < bullet_y2) & (firing)) ? 1'b1 : 1'b0;
+    assign player_bullet = ((x > bullet_x1) & (y > bullet_y1) & (x < bullet_x2) & (y < bullet_y2) & (player_firing)) ? 1'b1 : 1'b0;
+
+    assign enemy_ship = ((x > enemy1_x1) & (y > enemy1_y1) & (x < enemy1_x2) & (y < enemy1_y2) & (e1alive)) ? 1'b1 : 1'b0;
+
+    assign enemy_bullet = ((x > e1bullet_x1) & (y > e1bullet_y1) & (x < e1bullet_x2) & (y < e1bullet_y2) & (enemy1_firing)) ? 1'b1 : 1'b0;
+
+
 
     assign light = (((x > light1_x1) & (y > light1_y1) & (x < light1_x2) & (y < light1_y2)) || 
-						  ((x > light2_x1) & (y > light2_y1) & (x < light2_x2) & (y < light2_y2)) || 
-						  ((x > light3_x1) & (y > light3_y1) & (x < light3_x2) & (y < light3_y2)) || 
-						  ((x > light4_x1) & (y > light4_y1) & (x < light4_x2) & (y < light4_y2)) ||
-						  ((x > light5_x1) & (y > light5_y1) & (x < light5_x2) & (y < light5_y2)) || 
-						  ((x > light6_x1) & (y > light6_y1) & (x < light6_x2) & (y < light6_y2))
-						  ) ? 1'b1 : 1'b0;
+		   ((x > light2_x1) & (y > light2_y1) & (x < light2_x2) & (y < light2_y2)) || 
+       		   ((x > light3_x1) & (y > light3_y1) & (x < light3_x2) & (y < light3_y2)) || 
+		   ((x > light4_x1) & (y > light4_y1) & (x < light4_x2) & (y < light4_y2)) ||
+		   ((x > light5_x1) & (y > light5_y1) & (x < light5_x2) & (y < light5_y2)) || 
+		   ((x > light6_x1) & (y > light6_y1) & (x < light6_x2) & (y < light6_y2))
+		    ) ? 1'b1 : 1'b0;
  
     // Designate colors:
-    assign VGA_R[2] = player_ship | light;  // player_ship is red
-    assign VGA_G[2] = player_bullet | light;// player_bullet is green  
-    assign VGA_B[1] = player_ship | light; // light is white (so present in all colors)
+    // player_ship is purple. player_bullet is green.
+    // enemy ship is red.  enemy_bullet is yellow
+    // light is white
+    assign VGA_R[2] = player_ship | light | enemy_ship | enemy_bullet;  
+    assign VGA_G[2] = player_bullet | light | enemy_bullet;  
+    assign VGA_B[1] = player_ship | light; 
 
-    // Must fill in rest of bits in array for VGA. Default set to zero.
-    assign VGA_R[0] = player_ship | light;
-    assign VGA_R[1] = player_ship | light;
+    // Must fill in rest of bits in array for VGA.
+    assign VGA_R[0] = player_ship | light | enemy_ship | enemy_bullet;
+    assign VGA_R[1] = player_ship | light | enemy_ship | enemy_bullet;
 	 
-    assign VGA_G[0] = player_bullet | light;
-    assign VGA_G[1] = player_bullet | light;
+    assign VGA_G[0] = player_bullet | light | enemy_bullet;
+    assign VGA_G[1] = player_bullet | light | enemy_bullet;
 	 
     assign VGA_B[0] = player_ship | light;
     

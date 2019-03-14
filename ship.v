@@ -77,11 +77,13 @@ module ship #(
             // Bullet logic
             if (i_sw[4] & ~in_air) // If we press shoot and the bullet is not in the air
                 in_air = 1;
-				if (~i_sw[4] & ~in_air) //if we are not pressing shoot and its not in air, bullet should follow player
-				begin
-					 by <= y;
-					 bx <= x;
-				end	 
+
+            if (~i_sw[4] & ~in_air) //if we are not pressing shoot and its not in air, bullet should follow player
+            begin
+                by <= y;
+                bx <= x;
+            end	 
+
             if (in_air) // If bullet is in the air
                 by <= by - 2'b11; // Move bullet up
 
