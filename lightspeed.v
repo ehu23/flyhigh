@@ -4,7 +4,8 @@ module lightspeed #(
     IY=240,         // initial vertical position of square centre
     D_WIDTH=640,    // width of display
     D_HEIGHT=480,   // height of display
-    L_FACTOR=4      // Factor of length of a piece of light
+    L_FACTOR=4,     // Factor of length of a piece of light
+	 SPEED=2			  // Speed of light
     )
     // The above values are default parameters if none are supplied.
     (
@@ -49,8 +50,8 @@ module lightspeed #(
         end
         if (i_animate && i_ani_stb && ~i_paused)
         begin
-            y1 <= y1 + 2'b10;  // move the light down to simulate lightspeed 
-            y2 <= y2 + 2'b10;
+            y1 <= y1 + SPEED*1'b1;  // move the light down to simulate lightspeed 
+            y2 <= y2 + SPEED*1'b1;
 
             // Player Boundary control:
             if (x1 <= H_SIZE + 1'b1)  // edge of square is at left of screen

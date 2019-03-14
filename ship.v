@@ -41,10 +41,10 @@ module ship #(
     assign o_y2 = y + H_SIZE;  // bottom
 
     // For now, assign the bullet to be the same as the player size
-    assign o_bx1 = bx - H_SIZE/2;
-    assign o_bx2 = bx + H_SIZE/2;
-    assign o_by1 = by - H_SIZE/2;
-    assign o_by2 = by + H_SIZE/2;
+    assign o_bx1 = bx - H_SIZE/4;
+    assign o_bx2 = bx + H_SIZE/4;
+    assign o_by1 = by - H_SIZE/4;
+    assign o_by2 = by + H_SIZE/4;
 
     assign o_firing = in_air;
 	 
@@ -65,13 +65,13 @@ module ship #(
         begin
             // Player Movement
             if (i_sw[0]) // Right
-                x <= x + 1'b1;
+                x <= x + 2'b10;
             if (i_sw[7]) // Left
-                x <= x - 1'b1;
+                x <= x - 2'b10;
             if (i_sw[6]) // Up
-                y <= y - 1'b1;
+                y <= y - 2'b10;
             if (i_sw[1]) // Down
-                y <= y + 1'b1;
+                y <= y + 2'b10;
 
 
             // Bullet logic
@@ -83,7 +83,7 @@ module ship #(
 					 bx <= x;
 				end	 
             if (in_air) // If bullet is in the air
-                by <= by - 2'b10; // Move bullet up
+                by <= by - 2'b11; // Move bullet up
 
             // Player Boundary control:
             if (x <= H_SIZE + 1'b1)  // edge of square is at left of screen
