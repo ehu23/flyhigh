@@ -16,7 +16,7 @@ module ship #(
     output wire [11:0] o_x1,  // player left edge: 12-bit value: 0-4095. We use 12 bits so this module can be used on 4k as well.
     output wire [11:0] o_x2,  // player right edge
     output wire [11:0] o_y1,  // player top edge
-    output wire [11:0] o_y2   // player bottom edge
+    output wire [11:0] o_y2,   // player bottom edge
     output wire [11:0] o_bx1, // bullet left edge 
     output wire [11:0] o_bx2, // bullet right edge
     output wire [11:0] o_by1, // bullet top edge
@@ -38,10 +38,10 @@ module ship #(
     assign o_y2 = y + H_SIZE;  // bottom
 
     // For now, assign the bullet to be the same as the player size
-    assign o_bx1 = bx - H_SIZE;
-    assign o_bx2 = bx + H_SIZE;
-    assign o_by1 = by - H_SIZE;
-    assign o_by2 = by + H_SIZE;
+    assign o_bx1 = bx - H_SIZE/2;
+    assign o_bx2 = bx + H_SIZE/2;
+    assign o_by1 = by - H_SIZE/2;
+    assign o_by2 = by + H_SIZE/2;
 
     assign o_firing = in_air;
 
@@ -71,13 +71,17 @@ module ship #(
             // Bullet logic
             if (i_sw[4] & ~in_air) // If we press shoot and the bullet is not in the air
                 in_air = 1;
-
+				if (~i_sw[4] & ~in_air) //if we are not pressing shoot and its not in air, bullet should follow player
+				begin
+					 by <= y;
+					 bx <= x;
+				end	 
             if (in_air) // If bullet is in the air
-                by <= by - 1'b1; // Move bullet up
+                by <= by - 2'b10; // Move bullet up
 
             // Player Boundary control:
             if (x <= H_SIZE + 1'b1)  // edge of square is at left of screen
-                x <= H_SIZE + 2'b10);
+                x <= H_SIZE + 2'b10;
             if (x >= (D_WIDTH - H_SIZE - 1'b1))  // edge of square at right
                 x <= D_WIDTH - H_SIZE - 2'b10;            
             if (y <= H_SIZE + 1'b1)  // edge of square at top of screen

@@ -16,7 +16,7 @@ module lightspeed #(
     output wire [11:0] o_1x1,  // square left edge: 12-bit value: 0-4095. We use 12 bits so this module can be used on 4k as well.
     output wire [11:0] o_1x2,  // square right edge
     output wire [11:0] o_1y1,  // square top edge
-    output wire [11:0] o_1y2   // square bottom edge
+    output wire [11:0] o_1y2,   // square bottom edge
     output wire [11:0] o_2x1,  // square left edge: 12-bit value: 0-4095. We use 12 bits so this module can be used on 4k as well.
     output wire [11:0] o_2x2,  // square right edge
     output wire [11:0] o_2y1,  // square top edge
@@ -44,17 +44,17 @@ module lightspeed #(
         begin
             x1 <= IX;
             y1 <= IY;
-            x2 <= IX;
+            x2 <= (IX < D_WIDTH/2) ? (D_WIDTH/2-IX) + D_WIDTH/2 : D_WIDTH/2 - (IX-D_WIDTH/2);
             y2 <= IY;
         end
         if (i_animate && i_ani_stb && ~i_paused)
         begin
-            y1 <= y1 + 1'b1;  // move the light down to simulate lightspeed 
-            y2 <= y2 + 1'b1;
+            y1 <= y1 + 2'b10;  // move the light down to simulate lightspeed 
+            y2 <= y2 + 2'b10;
 
             // Player Boundary control:
             if (x1 <= H_SIZE + 1'b1)  // edge of square is at left of screen
-                x1 <= H_SIZE + 2'b10);
+                x1 <= H_SIZE + 2'b10;
             if (x1 >= (D_WIDTH - H_SIZE - 1'b1))  // edge of square at right
                 x1 <= D_WIDTH - H_SIZE - 2'b10;            
             if (y1 <= H_SIZE + 1'b1)  // edge of square at top of screen
@@ -63,7 +63,7 @@ module lightspeed #(
                 y1 <= H_SIZE + 2'b10; // move to top of screen                
 
             if (x2 <= H_SIZE + 1'b1)  // edge of square is at left of screen
-                x2 <= H_SIZE + 2'b10);
+                x2 <= H_SIZE + 2'b10;
             if (x2 >= (D_WIDTH - H_SIZE - 1'b1))  // edge of square at right
                 x2 <= D_WIDTH - H_SIZE - 2'b10;            
             if (y2 <= H_SIZE + 1'b1)  // edge of square at top of screen

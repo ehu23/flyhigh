@@ -56,7 +56,7 @@ module top(
     wire [11:0] bullet_x1, bullet_x2, bullet_y1, bullet_y2;  // 12-bit values: 0-4095
 
     // Light streaks
-    wire light; 
+    wire light;
     wire [11:0] light1_x1, light1_x2, light1_y1, light1_y2;  // 12-bit values: 0-4095
     wire [11:0] light2_x1, light2_x2, light2_y1, light2_y2;  // 12-bit values: 0-4095
 
@@ -79,7 +79,7 @@ module top(
         .o_firing(firing)
     );
 
-    lightspeed #(.H_SIZE(10)) light1 (
+    lightspeed #(.H_SIZE(10), .IX(100)) light1 (
         .i_clk(CLK),
         .i_ani_stb(pix_stb),
         .i_rst(rst),
@@ -92,7 +92,7 @@ module top(
         .o_2x1(light2_x1),
         .o_2x2(light2_x2),
         .o_2y1(light2_y1),
-        .o_2y2(light2_y2),
+        .o_2y2(light2_y2)
     );
 
     assign player_ship = ((x > player_x1) & (y > player_y1) &
