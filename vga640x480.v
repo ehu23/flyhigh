@@ -2,13 +2,14 @@ module vga640x480(
     input wire i_clk,           // base clock
     input wire i_pix_stb,       // pixel clock strobe
     input wire i_rst,           // reset: restarts frame
-    input wire i_paused,        // paused: paused frame
+	 input wire i_pause,			  // pause: the button itself
     output wire o_hs,           // horizontal sync
     output wire o_vs,           // vertical sync
     output wire o_blanking,     // high during blanking interval
     output wire o_active,       // high during active pixel drawing
     output wire o_screenend,    // high for one tick at the end of screen
     output wire o_animate,      // high for one tick at end of active drawing
+	 output wire o_paused,		  // high when in a pause state
     output wire [9:0] o_x,      // current (visible) pixel x position
     output wire [8:0] o_y       // current (visible) pixel y position
     );
@@ -27,7 +28,8 @@ module vga640x480(
     // start, including the blanking interval. Used for sync signals.
     reg [9:0] h_count;  // line position. 640 active pixels and 160 for front/back porch and sync pulse. Total: 800.
     reg [9:0] v_count;  // screen position. 480 active pixels and 45 for front/back porch and sync pulse. Total: 525.
-
+	 reg paused = 0;
+	 
     // generate sync signals (active low for 640x480, so '0' during the sync)
     assign o_hs = ~((h_count >= HS_STA) & (h_count < HS_END));
     assign o_vs = ~((v_count >= VS_STA) & (v_count < VS_END));
@@ -51,15 +53,23 @@ module vga640x480(
     // start a new frame, this is during the back porch.
     assign o_animate = ((v_count == VA_END - 1'b1) & (h_count == LINE));
 
+	 assign o_paused = paused;
+	 
     always @ (posedge i_clk)
     begin
         if (i_rst)  // reset to start of frame
         begin
             h_count <= 1'b0;
             v_count <= 1'b0;
+				paused <= 0;
         end
+		  
+		  if (i_pause) // pause is pressed
+		  begin
+				paused <= ~paused;
+		  end
 
-        if (i_pix_stb && ~i_paused)  // once per pixel
+        if (i_pix_stb)  // once per pixel
         begin
             if (h_count == LINE)  // end of line
             begin
@@ -72,5 +82,7 @@ module vga640x480(
             if (v_count == SCREEN)  // end of screen
                 v_count <= 1'b0;
         end
+		  
+
     end
 endmodule

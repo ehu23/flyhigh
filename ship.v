@@ -32,6 +32,9 @@ module ship #(
     reg [11:0] by = IY;
     reg in_air = 0;
 
+	 
+	 
+	 
     assign o_x1 = x - H_SIZE;  // left: centre minus half horizontal size
     assign o_x2 = x + H_SIZE;  // right
     assign o_y1 = y - H_SIZE;  // top
@@ -44,6 +47,9 @@ module ship #(
     assign o_by2 = by + H_SIZE/2;
 
     assign o_firing = in_air;
+	 
+	 
+	 
 
     always @ (posedge i_clk)
     begin
